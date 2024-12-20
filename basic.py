@@ -9,15 +9,6 @@ def hello_world():
     
     return "hello"
 
-@app.route('/example', methods=['GET', 'POST'])
-def connectExample():
-    data = request.get_json()
-    isHA = data.get('isHA')
-    print(isHA)
-    if not data:
-        return "No JSON data received", 400
-    return jsonify({"isHA": isHA})
-
 @app.route('/install', methods=['GET', 'POST'])    
 def executeProcess():
     
@@ -56,20 +47,22 @@ def sshCommand(list):
     try:
         # ssh 연결
         ssh.connect(hostname=list[0], port=list[1], username=list[2], password=list[3])
-        stdin, stdout, stderr = ssh.exec_command("ls")
         
+        arg1 = list[0]
+        arg2 = list[1]
+        script_command = f'/root/test.sh {arg1} {arg2}'
+        stdin, stdout, stderr = ssh.exec_command(script_command)
+        # stdin, stdout, stderr = ssh.exec_command("./root/test.sh")
         # 실시간으로 출력 읽기
         while not stdout.channel.exit_status_ready():
         # stdout에서 한 줄씩 읽고 출력
             if stdout.channel.recv_ready():
                 output = stdout.channel.recv(1024).decode("utf-8")
                 print(output, end='')  # 실시간 출력
-
-
-
         # 실행 후 남은 출력 읽기
-        output = stdout.read().decode("utf-8")
-        print(output)
+        
+        error = stderr.read().decode("utf-8")
+        print(error)
 
         
         # 성공 시
@@ -91,7 +84,8 @@ def setLogFile():
     file_handler = logging.FileHandler('/Users/user/Documents/test_log')
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
-    
+
+
     
 if __name__ == '__main__':
     app.run(debug=True)
