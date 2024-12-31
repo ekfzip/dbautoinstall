@@ -36,12 +36,12 @@ cd ./usr/local/mysql/bin
 
 mysql -u root -p$PASSWORD
 
-$QUERY -e "create database test"
-$QUERY -e "use test"
-$QUERY -e "create table table1( userID varchar(20))" test
-$QUERY -e "alter user 'repl'@'%' identified by '$PASSWORD'" test
-$QUERY -e "grant replication slave on *.* to 'repl'@'%'"
-$QUERY -e "flush privileges"
+$QUERY -e "create database test;"
+$QUERY -e "use test;"
+$QUERY -e "create table table1( userID varchar(20));" test
+$QUERY -e "alter user 'repl'@'%' identified by '$PASSWORD';" test
+$QUERY -e "grant replication slave on *.* to 'repl'@'%';"
+$QUERY -e "flush privileges;"
 
 # make dump file
 cd /usr/local/mysql/bin

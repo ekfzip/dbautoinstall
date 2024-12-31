@@ -14,8 +14,6 @@ def executeProcess():
     
     print(checkValidation(data))
     
-    list = getData(data)
-    
     ssh_master, ssh_slave1, ssh_slave2 = testSSHConnection(data)
         
     sentToFile(ssh_master, ssh_slave1, ssh_slave2)
@@ -33,24 +31,7 @@ def checkValidation(data):
         return "Invalid or missing JSON data"
     
     return "successfully received data"
-    
-def getData(data):
-    
-    host = data.get('host')
-    port = data.get('port')
-    userName = data.get('username')
-    password = data.get('password')
-    # isHA = data.get('isHA')
-    # replica = data.get('replica')
-    mysqlPort = data.get('mysqlPort')
-    slave1 = data.get('slave1')
-    slave2 = data.get('slave2')
-    serverID1 = data.get('serverID1')
-    serverID2 = data.get('serverID2')
-    
-    list = [host, port, userName, password, mysqlPort, slave1, slave2, serverID1, serverID2]
-    
-    return list    
+      
 
 # master, slave 서버 연결 확인하는 함수
 def testSSHConnection(data):
@@ -84,9 +65,11 @@ def testSSHConnection(data):
     return ssh_master, ssh_slave1, ssh_slave2
 
 def sentToFile(ssh_master, ssh_slave1, ssh_slave2):
+    
     scp_master = SCPClient(ssh_master.get_transport())
     scp_slave1 = SCPClient(ssh_slave1.get_transport())
     scp_slave2 = SCPClient(ssh_slave2.get_transport())
+    
     try:
         
         scp_master.put('/Users/user/Desktop/test/basic_install.sh', '/root/basic_install.sh')
@@ -110,17 +93,18 @@ def sentToFile(ssh_master, ssh_slave1, ssh_slave2):
             
         
 # 자동 설치에 필요한 명령들 실행시키는 함수
-def installDB(ssh_master, ssh_slave1, ssh_slave2,list):
+def installDB(ssh_master, ssh_slave1, ssh_slave2, data):
     
     
     # 셋 다 동일하게 db 설치부터
     try:
-        arg1 = list[3] # password
-        arg2 = list[4] # mysqlPort
+        arg1 = data.get('password') # password
+        arg2 = data.get('mysqlPort') # mysqlPort
         count = 0
         
         script_command = f'/root/basic_install.sh {arg1} {arg2}' # 테스트 용도
         ssh_list = [ssh_master, ssh_slave1, ssh_slave2]
+        
         for s in ssh_list:
             print(count + "번째 DB 설치를 시작합니다.")
             count += 1
@@ -136,24 +120,24 @@ def installDB(ssh_master, ssh_slave1, ssh_slave2,list):
                 
     return
 
-def settingDB(ssh_master, ssh_slave1, ssh_slave2, list):
+def settingDB(ssh_master, ssh_slave1, ssh_slave2, data):
     
     # master DB
     try:
-        master_arg1=list[3] # password
-        master_arg2=list[5] # slave 1 ip
-        master_arg3=list[6] # slave 2 ip
+        master_arg1=data.get('password') # password
+        master_arg2=data.get('slave1') # slave 1 ip
+        master_arg3=data.get('slave2') # slave 2 ip
         script_command = f'/root/master_db.sh {master_arg1} {master_arg2} {master_arg3}' 
         stdout, stderr = ssh_master.exec_command(script_command)
         showScriptOutput(stdout, stderr)
         
     except: print("Master DB 환경 설정이 정상적으로 진행되지 않았습니다.")
     
-    slave_arg1=list[7] # server id 1
-    slave_arg2=list[8] # server id 2
-    slave_arg3=list[0] # host
-    slave_arg4=list[3] # password
-    slave_arg5=list[4] # mysqlPort
+    slave_arg1=data.get('serverID1') # server id 1
+    slave_arg2=data.get('serverID2') # server id 2
+    slave_arg3=data.get('host') # host
+    slave_arg4=data.get('password') # password
+    slave_arg5=data.get('mysqlPort') # mysqlPort
     
     # slave DB
     try:
@@ -182,6 +166,8 @@ def showScriptOutput(stdout, stderr):
     
 def setLogFile():
     
+    for log in logger.handlers:
+        log.flush()
     # 이건 콘솔에 출력하는 로그
     handler = logging.StreamHandler()
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')

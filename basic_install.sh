@@ -21,7 +21,7 @@ mv /usr/local/mysql-8.0.32-linux-glibc2.12-x86_64 /usr/local/mysql
 
 # make data file
 mkdir /usr/loca/mysql/data
-chown -R mysql:dba /usr/local/mysql/data
+chown -R mysql.dba /usr/local/mysql/data
 chmod 750 /usr/local/mysql/data
 
 # firewall
