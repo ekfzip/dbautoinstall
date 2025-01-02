@@ -6,8 +6,14 @@ SLAVE2=$3
 
 QUREY="mysql -u root -p$PASSWORD"
 
+# setting env
+echo "export PATH=$PATH:/usr/local/mysql/bin" >> ~/.bash_profile
+source ~/.bash_profile
+
 # cnf file
-echo '[mysqld]
+
+cat << EOF > /usr/local/mysql/my.cnf
+[mysqld]
 user=mysql
 port=3306
 basedir=/usr/local/mysql
@@ -24,11 +30,14 @@ authentication_policy=mysql_native_password
 
 [client]
 port=3306
-socket=/tmp/mysql.sock' /usr/local/mysql/my.cnf
+socket=/tmp/mysql.sock
+EOF
 
 # initialization
 cd /usr/local/mysql/bin
 ./mysqld --defaults-file=/usr/local/mysql/my.cnf --initialize --user=mysql
+
+echo "finished initialization"
 
 # exec
 cd ./usr/local/mysql/bin

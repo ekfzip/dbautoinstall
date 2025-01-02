@@ -32,10 +32,14 @@ socket=/tmp/mysql.sock' /usr/local/mysql/my.cnf
 cd /usr/local/mysql/bin
 ./mysqld --defaults-file=/usr/local/mysql/my.cnf --initialize --user=mysql
 
+echo "finished initialization"
+
 # exec
 cd /usr/local/mysql/bin
 ./mysqld_safe &
 
 $QUERY test < /root/test.sql
 
-$QUERY "CHANGE MASTER HOST='$HOST', MASTER_PORT=$MYSQLPORT, MASTER_USER='repl', MASTER_PASSWORD='$PASSWORD', MASTER_AUTO_POSITION=1,GET_MASTER_PUBLIC_KEY=1;"
+$QUERY -e "CHANGE MASTER HOST='$HOST', MASTER_PORT=$MYSQLPORT, MASTER_USER='repl', MASTER_PASSWORD='$PASSWORD', MASTER_AUTO_POSITION=1,GET_MASTER_PUBLIC_KEY=1;"
+
+$QUERY -e "show slave status\G;"

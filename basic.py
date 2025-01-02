@@ -17,10 +17,12 @@ def executeProcess():
     ssh_master, ssh_slave1, ssh_slave2 = testSSHConnection(data)
         
     sentToFile(ssh_master, ssh_slave1, ssh_slave2)
-        
-    installDB(ssh_master, ssh_slave1, ssh_slave2, list)
     
-    settingDB(ssh_master, ssh_slave1, ssh_slave2, list)
+    # chmodChange(ssh_master, ssh_slave1, ssh_slave2)
+        
+    # installDB(ssh_master, ssh_slave1, ssh_slave2, data)
+    
+    settingDB(ssh_master, ssh_slave1, ssh_slave2, data)
     
     setLogFile()
 
@@ -56,11 +58,11 @@ def testSSHConnection(data):
         script_command_slave1 = f'echo {slave1}'
         script_command_slave2 = f'echo {slave2}'
         
-        print("Executing command:", script_command_master)
-        print("Executing command:", script_command_slave1)
-        print("Executing command:", script_command_slave2)
+        print("Master DB Executing command:", script_command_master)
+        print("Slave DB 1 Executing command:", script_command_slave1)
+        print("Slave DB 2 Executing command:", script_command_slave2)
         
-    except: "connection failed"
+    except: print("connection failed")
     
     return ssh_master, ssh_slave1, ssh_slave2
 
@@ -70,11 +72,13 @@ def sentToFile(ssh_master, ssh_slave1, ssh_slave2):
     scp_slave1 = SCPClient(ssh_slave1.get_transport())
     scp_slave2 = SCPClient(ssh_slave2.get_transport())
     
+    basic_install_path = '/Users/user/Desktop/test/basic_install.sh'
+    basic_install_file = '/root/basic_install.sh'
     try:
         
-        scp_master.put('/Users/user/Desktop/test/basic_install.sh', '/root/basic_install.sh')
-        scp_slave1.put('/Users/user/Desktop/test/basic_install.sh', '/root/basic_install.sh')
-        scp_slave2.put('/Users/user/Desktop/test/basic_install.sh', '/root/basic_install.sh')
+        scp_master.put(basic_install_path, basic_install_file)
+        scp_slave1.put(basic_install_path, basic_install_file)
+        scp_slave2.put(basic_install_path, basic_install_file)
         
         print("basic_install.sh 파일이 정상적으로 전송되었습니다.")
         
@@ -100,23 +104,22 @@ def installDB(ssh_master, ssh_slave1, ssh_slave2, data):
     try:
         arg1 = data.get('password') # password
         arg2 = data.get('mysqlPort') # mysqlPort
-        count = 0
+        count = 1
         
         script_command = f'/root/basic_install.sh {arg1} {arg2}' # 테스트 용도
         ssh_list = [ssh_master, ssh_slave1, ssh_slave2]
         
         for s in ssh_list:
-            print(count + "번째 DB 설치를 시작합니다.")
+            print(f"{count}번째 DB 설치를 시작합니다.")
             count += 1
-            stdout, stderr = s.exec_command(script_command)
+            stdin, stdout, stderr = s.exec_command(script_command)
             showScriptOutput(stdout, stderr)    
+        
+        # stdin, stdout, stderr = ssh_master.exec_command(script_command)
+        # showScriptOutput(stdout, stderr)
 
         
     except: "DB 설치가 제대로 진행되지 않았습니다. 다시 시도해 주세요."
-    finally:
-        ssh_master.close()
-        ssh_slave1.close()
-        ssh_slave2.close()
                 
     return
 
@@ -124,31 +127,31 @@ def settingDB(ssh_master, ssh_slave1, ssh_slave2, data):
     
     # master DB
     try:
-        master_arg1=data.get('password') # password
-        master_arg2=data.get('slave1') # slave 1 ip
-        master_arg3=data.get('slave2') # slave 2 ip
+        master_arg1 = data.get('password') # password
+        master_arg2 = data.get('slave1') # slave 1 ip
+        master_arg3 = data.get('slave2') # slave 2 ip
         script_command = f'/root/master_db.sh {master_arg1} {master_arg2} {master_arg3}' 
-        stdout, stderr = ssh_master.exec_command(script_command)
+        stdin, stdout, stderr = ssh_master.exec_command(script_command)
         showScriptOutput(stdout, stderr)
         
     except: print("Master DB 환경 설정이 정상적으로 진행되지 않았습니다.")
     
-    slave_arg1=data.get('serverID1') # server id 1
-    slave_arg2=data.get('serverID2') # server id 2
-    slave_arg3=data.get('host') # host
-    slave_arg4=data.get('password') # password
-    slave_arg5=data.get('mysqlPort') # mysqlPort
+    slave_arg1 = data.get('serverID1') # server id 1
+    slave_arg2 = data.get('serverID2') # server id 2
+    slave_arg3 = data.get('host') # host
+    slave_arg4 = data.get('password') # password
+    slave_arg5 = data.get('mysqlPort') # mysqlPort
     
     # slave DB
     try:
-        script_command = f'/root/slave_db.sh {slave_arg1} {slave_arg3} {slave_arg4}, {slave_arg5}' 
-        stdout, stderr = ssh_slave1.exec_command(script_command)
+        script_command = f'/root/slave_db.sh {slave_arg1} {slave_arg3} {slave_arg4} {slave_arg5}' 
+        stdin, stdout, stderr = ssh_slave1.exec_command(script_command)
         showScriptOutput(stdout, stderr)
     except: print("첫 번쩨 Slave DB 환경 설정이 정상적으로 진행되지 않았습니다.")
     
     try: 
-        script_command = f'/root/slave_db.sh {slave_arg2} {slave_arg3} {slave_arg4}, {slave_arg5}' 
-        stdout, stderr = ssh_slave2.exec_command(script_command)
+        script_command = f'/root/slave_db.sh {slave_arg2} {slave_arg3} {slave_arg4} {slave_arg5}' 
+        stdin, stdout, stderr = ssh_slave2.exec_command(script_command)
         showScriptOutput(stdout, stderr)
     except: print("두 번쩨 Slave DB 환경 설정이 정상적으로 진행되지 않았습니다.")
         
@@ -162,7 +165,28 @@ def showScriptOutput(stdout, stderr):
             print(output, end='') 
     error = stderr.read().decode("utf-8")
     print(error)
+
+def chmodChange(ssh_master, ssh_slave1, ssh_slave2):
+    
+    ssh_list = [ssh_master, ssh_slave1, ssh_slave2]
+    
+    basic_command = f'chmod +x /root/basic_install.sh'
+    ls_command = f'ls -al /root'
+    
+    for s in ssh_list:
         
+        s.exec_command(basic_command)
+        stdin_ls, stdout_ls, stderr_ls = s.exec_command(ls_command)
+        showScriptOutput(stdout_ls, stderr_ls)
+        
+        if s == ssh_master:
+            stdin_ls, stdout_ls, stderr_ls = s.exec_command("chmod +x /root/master_db.sh")
+            showScriptOutput(stdout_ls, stderr_ls)
+        else:
+            stdin_ls, stdout_ls, stderr_ls = s.exec_command("chmod +x /root/slave_db.sh")
+            showScriptOutput(stdout_ls, stderr_ls)
+            
+                
     
 def setLogFile():
     
