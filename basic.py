@@ -18,9 +18,9 @@ def executeProcess():
         
     sentToFile(ssh_master, ssh_slave1, ssh_slave2)
     
-    # chmodChange(ssh_master, ssh_slave1, ssh_slave2)
+    chmodChange(ssh_master, ssh_slave1, ssh_slave2)
         
-    # installDB(ssh_master, ssh_slave1, ssh_slave2, data)
+    installDB(ssh_master, ssh_slave1, ssh_slave2, data)
     
     settingDB(ssh_master, ssh_slave1, ssh_slave2, data)
     

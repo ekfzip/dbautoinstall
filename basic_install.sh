@@ -31,4 +31,8 @@ systemctl start firewalld
 firewall-cmd --zone=public --permanent --add-port=$MYSQLPORT/tcp
 firewall-cmd --reload
 
+# setting env
+yum -y install ncurses-compat-libs*
+echo "export PATH=$PATH:/usr/local/mysql/bin" >> ~/.bash_profile
+source ~/.bash_profile
 
